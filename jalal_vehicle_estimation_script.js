@@ -100,7 +100,7 @@
 
   /* ================= FIND BATTERY ================= */
 
-  async function findBatteryGroup() {
+  async function findBatteryGroupOldWorking() {
 
     const el = document.getElementById("suggested_battery_group");
     if (!el) return;
@@ -155,6 +155,85 @@ if (ghlBatteryInput) {
   );
 }
   }
+
+
+  function setBatteryFieldValue(group) {
+
+  let attempts = 0;
+
+  const interval = setInterval(() => {
+
+    const input = document.querySelector(
+      "input[data-q='battery_group']"
+    );
+
+    if (input) {
+
+      input.value = group;
+
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+
+      console.log("✅ Battery field updated:", group);
+
+      clearInterval(interval);
+    }
+
+    attempts++;
+
+    if (attempts > 20) {
+      clearInterval(interval);
+    }
+
+  }, 200);
+}
+
+
+  async function findBatteryGroup() {
+
+  const el = document.getElementById("suggested_battery_group");
+  if (!el) return;
+
+  const vehicle = getVehicleValues();
+  if (!vehicle) return;
+
+  const { year, make, model } = vehicle;
+  if (!year || !make || !model) return;
+
+  const key = `${year}|${make}|${model}`;
+
+  if (key === lastBatteryKey) return;
+  lastBatteryKey = key;
+
+  el.textContent = "Checking...";
+
+  const data = await loadBatteryData();
+
+  const matches = data.filter(row =>
+    String(row.Year) === String(year) &&
+    row.Make.toLowerCase() === make.toLowerCase() &&
+    row.Model.toLowerCase().includes(model.toLowerCase())
+  );
+
+  let group = "N/A";
+
+  if (!matches.length) {
+
+    console.log("⚠️ Battery not found");
+
+  } else {
+
+    group = matches[0].Battery_Group;
+    console.log("🔋 Battery Group Found:", group);
+
+  }
+
+  // Always update UI
+  el.textContent = group;
+
+  // Always update GHL field
+  setBatteryFieldValue(group);
+}
 
 
   /* ================= FIELD FINDERS ================= */
