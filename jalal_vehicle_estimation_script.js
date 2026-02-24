@@ -158,7 +158,7 @@ if (ghlBatteryInput) {
 
 
   function setBatteryFieldValue(group) {
-
+  console.log("updating with "+ group);
   let attempts = 0;
 
   const interval = setInterval(() => {
@@ -174,7 +174,7 @@ if (ghlBatteryInput) {
       input.dispatchEvent(new Event("input", { bubbles: true }));
       input.dispatchEvent(new Event("change", { bubbles: true }));
 
-      console.log("✅ Battery field updated:", group);
+      console.log(" Battery field updated:", group);
 
       clearInterval(interval);
     }
@@ -219,12 +219,12 @@ if (ghlBatteryInput) {
 
   if (!matches.length) {
 
-    console.log("⚠️ Battery not found");
+    console.log(" Battery not found");
 
   } else {
 
     group = matches[0].Battery_Group;
-    console.log("🔋 Battery Group Found:", group);
+    console.log(" Battery Group Found:", group);
 
   }
 
