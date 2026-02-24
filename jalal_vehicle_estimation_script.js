@@ -100,7 +100,7 @@
 
   /* ================= FIND BATTERY ================= */
 
-  async function findBatteryGroupOldWorking() {
+  async function findBatteryGroup() {
 
     const el = document.getElementById("suggested_battery_group");
     if (!el) return;
@@ -134,106 +134,8 @@
 
     const group = matches[0].Battery_Group;
     el.textContent = group;
-
     console.log(" Battery Group Found:", group);
-
-    const ghlBatteryInput = document.querySelector(
-  "input[data-q='battery_group']"
-);
-
-if (ghlBatteryInput) {
-
-  ghlBatteryInput.value = group;
-
-  // Trigger GHL events so value persists
-  ghlBatteryInput.dispatchEvent(
-    new Event("input", { bubbles: true })
-  );
-
-  ghlBatteryInput.dispatchEvent(
-    new Event("change", { bubbles: true })
-  );
-}
   }
-
-
-  function setBatteryFieldValue(group) {
-  console.log("updating with "+ group);
-  let attempts = 0;
-
-  const interval = setInterval(() => {
-
-    const input = document.querySelector(
-      "input[data-q='battery_group']"
-    );
-
-    if (input) {
-
-      input.value = group;
-
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.dispatchEvent(new Event("change", { bubbles: true }));
-
-      console.log(" Battery field updated:", group);
-
-      clearInterval(interval);
-    }
-
-    attempts++;
-
-    if (attempts > 20) {
-      clearInterval(interval);
-    }
-
-  }, 200);
-}
-
-
-  async function findBatteryGroup() {
-
-  const el = document.getElementById("suggested_battery_group");
-  if (!el) return;
-
-  const vehicle = getVehicleValues();
-  if (!vehicle) return;
-
-  const { year, make, model } = vehicle;
-  if (!year || !make || !model) return;
-
-  const key = `${year}|${make}|${model}`;
-
-  if (key === lastBatteryKey) return;
-  lastBatteryKey = key;
-
-  el.textContent = "Checking...";
-
-  const data = await loadBatteryData();
-
-  const matches = data.filter(row =>
-    String(row.Year) === String(year) &&
-    row.Make.toLowerCase() === make.toLowerCase() &&
-    row.Model.toLowerCase().includes(model.toLowerCase())
-  );
-
-  let group = "N/A";
-
-  if (!matches.length) {
-
-    console.log(" Battery not found");
-
-  } else {
-
-    group = matches[0].Battery_Group;
-    console.log(" Battery Group Found:", group);
-
-  }
-
-  // Always update UI
-  el.textContent = group;
-
-  // Always update GHL field
-  setBatteryFieldValue(group);
-}
 
 
   /* ================= FIELD FINDERS ================= */
@@ -429,5 +331,70 @@ if (ghlBatteryInput) {
   window.addEventListener("load", init);
   init();
 
+
+})();
+
+
+
+
+
+(function () {
+
+  console.log("🔄 Battery Field Sync Started");
+
+  let lastValue = null;
+
+  function getBatteryText() {
+    const el = document.getElementById("suggested_battery_group");
+    return el ? el.innerText.trim() : "";
+  }
+
+  function getBatteryInput() {
+    return document.querySelector(
+      "input[data-q='battery_group']"
+    );
+  }
+
+  function trigger(el) {
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  function syncBatteryField() {
+
+    const value = getBatteryText() || "N/A";
+    const input = getBatteryInput();
+
+    if (!input) return;
+
+    if (value === lastValue) return;
+
+    lastValue = value;
+
+    input.value = value;
+
+    trigger(input);
+
+    console.log("✅ Battery Synced:", value);
+  }
+
+  /* ===== Observe entire form for changes ===== */
+
+  const form = document.getElementById("_builder-form");
+
+  if (!form) return;
+
+  const observer = new MutationObserver(() => {
+    syncBatteryField();
+  });
+
+  observer.observe(form, {
+    subtree: true,
+    childList: true,
+    attributes: true
+  });
+
+  /* Initial sync */
+  setTimeout(syncBatteryField, 1000);
 
 })();
