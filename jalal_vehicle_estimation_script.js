@@ -136,6 +136,24 @@
     el.textContent = group;
 
     console.log(" Battery Group Found:", group);
+
+    const ghlBatteryInput = document.querySelector(
+  "input[data-q='battery_group']"
+);
+
+if (ghlBatteryInput) {
+
+  ghlBatteryInput.value = group;
+
+  // Trigger GHL events so value persists
+  ghlBatteryInput.dispatchEvent(
+    new Event("input", { bubbles: true })
+  );
+
+  ghlBatteryInput.dispatchEvent(
+    new Event("change", { bubbles: true })
+  );
+}
   }
 
 
