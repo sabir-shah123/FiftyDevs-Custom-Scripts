@@ -1,6 +1,19 @@
 (function () {
+
+  /*
+  ========================================
+  STATE FLAGS
+  ========================================
+  */
+
   let menuInjected = false;
   let injectingNow = false;
+
+  /*
+  ========================================
+  GET USER DATA
+  ========================================
+  */
 
   async function getUserData() {
     return new Promise((resolve) => {
@@ -14,7 +27,7 @@
           return;
         }
 
-        avatarBtn.click(); // open profile
+        avatarBtn.click();
 
         const observer = new MutationObserver(() => {
           const nameEl = document.querySelector(".hl-text-lg-medium");
@@ -28,8 +41,7 @@
 
             let email = emailEl.innerText.trim();
 
-            avatarBtn.click(); // close profile
-
+            avatarBtn.click();
             observer.disconnect();
 
             resolve({ name, email });
@@ -40,6 +52,12 @@
           childList: true,
           subtree: true,
         });
+
+        setTimeout(() => {
+          observer.disconnect();
+          resolve({ name: "", email: "" });
+        }, 3000);
+
       } catch (err) {
         resolve({ name: "", email: "" });
       }
@@ -47,9 +65,9 @@
   }
 
   /*
-  =========================
-  BUILD LINKS
-  =========================
+  ========================================
+  BUILD MENU LINKS
+  ========================================
   */
 
   async function buildMenuLinks() {
@@ -87,9 +105,9 @@
   }
 
   /*
-  =========================
+  ========================================
   ICONS
-  =========================
+  ========================================
   */
 
   const icons = [
@@ -101,21 +119,15 @@
   ];
 
   /*
-  =========================
+  ========================================
   INJECT MENU
-  =========================
+  ========================================
   */
 
   async function injectGroup(container) {
+
     if (!container) return;
-
-    if (menuInjected) {
-      return;
-    }
-
-    if (injectingNow) {
-      return;
-    }
+    if (menuInjected || injectingNow) return;
 
     if (container.querySelector(".custom-gHL-resources-group")) {
       menuInjected = true;
@@ -130,19 +142,27 @@
     groupDiv.className = "custom-gHL-resources-group";
 
     menuLinks.forEach((link, index) => {
+
       const a = document.createElement("a");
       a.href = link.url;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
-      a.className = "custom-menu-item";
+
+      a.className =
+        "group mt-2 flex h-7 cursor-pointer items-center justify-between rounded p-[10px] hover:bg-communities-sidebar-fill";
 
       a.innerHTML = `
-        <div class="col-span-1">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="${icons[index]}"></path>
-          </svg>
+        <div class="grid w-full grid-cols-6 items-center font-medium xl:grid-cols-8">
+          <div class="col-span-1 mr-3">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+              stroke-width="2" stroke="currentColor" class="h-5 w-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="${icons[index]}"></path>
+            </svg>
+          </div>
+          <div class="col-span-4 truncate xl:col-span-6 hl-text-md-medium">
+            ${link.title}
+          </div>
         </div>
-        <div class="col-span-4 hl-text-md-medium">${link.title}</div>
       `;
 
       groupDiv.appendChild(a);
@@ -155,69 +175,45 @@
   }
 
   /*
-  =========================
-  OBSERVER
-  =========================
+  ========================================
+  SIDEBAR DETECTION
+  ========================================
   */
 
-  const observer = new MutationObserver(() => {
-    if (menuInjected || injectingNow) return;
+  function tryInject() {
+    const menu = document.querySelector(".channel-list .content");
+    if (menu) injectGroup(menu);
+  }
 
-    const sticky = document.querySelector(".sticky.top-24.overflow-hidden");
-    if (!sticky) return;
-
-    const menuContainer = sticky.querySelector("div:nth-child(2)");
-    if (!menuContainer) return;
-
-    console.log("[Observer] Sidebar detected");
-    injectGroup(menuContainer);
+  const sidebarObserver = new MutationObserver(() => {
+    tryInject();
   });
 
-  observer.observe(document.body, { childList: true, subtree: true });
+  sidebarObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
 
-  /*
-  =========================
-  INITIAL CHECK
-  =========================
-  */
+  setTimeout(tryInject, 1200);
 
-function init() {
-  const menu = document.querySelector(
-    ".channel-list .content"
-  );
-
-  if (!menu) return;
-
-  injectGroup(menu);
-}
-
-  setTimeout(init, 1000);
-
-  const observer = new MutationObserver(() => {
-  const menu = document.querySelector(".channel-list .content");
-  if (menu && !document.querySelector("#custom-menu-group")) {
-    injectGroup(menu);
-  }
-});
-
-observer.observe(document.body, { childList: true, subtree: true });
-
-  
 })();
 
+
+
 /*
-  =========================
-  Hide the user profiles pictures
-  =========================
-  */
+========================================
+HIDE USER PROFILE AVATARS
+========================================
+*/
 
 (function () {
+
   const DEFAULT_AVATAR =
     "https://img.icons8.com/ios-glyphs/30/user-male-circle.png";
 
-  //  replace only avatar-like images
   function replaceSpecificAvatars() {
-    const avatarSelectors = [
+
+    const selectors = [
       ".n-avatar img",
       ".ghl-avatar img",
       ".default-avatar img",
@@ -226,26 +222,24 @@ observer.observe(document.body, { childList: true, subtree: true });
       ".n-avatar.default-avatar img",
     ];
 
-    avatarSelectors.forEach((selector) => {
-      const images = document.querySelectorAll(selector);
+    selectors.forEach((selector) => {
 
-      images.forEach((img) => {
-        // Skip if already replaced or not a profile-like src
-        if (img.src === DEFAULT_AVATAR || img.dataset.avatarFixed) return;
+      document.querySelectorAll(selector).forEach((img) => {
 
-        //  only replace if src looks like a user upload (not icons/logos)
+        if (img.dataset.avatarFixed) return;
+
         if (
           img.src.includes("storage.googleapis.com") ||
           img.src.includes("cdnclientportal") ||
           img.src.includes("user") ||
           !img.src
         ) {
+
           img.src = DEFAULT_AVATAR;
           img.srcset = "";
           img.alt = "User Avatar";
           img.dataset.avatarFixed = "true";
 
-          // Fix display if needed
           img.style.objectFit = "contain";
           img.style.width = "100%";
           img.style.height = "100%";
@@ -256,19 +250,19 @@ observer.observe(document.body, { childList: true, subtree: true });
 
   replaceSpecificAvatars();
 
-  // Watch for dynamically loaded avatars
-  const observer = new MutationObserver(() => {
+  const avatarObserver = new MutationObserver(() => {
     replaceSpecificAvatars();
   });
 
-  observer.observe(document.body, {
+  avatarObserver.observe(document.body, {
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ["src", "data-image-src", "class"],
+    attributeFilter: ["src", "class"],
   });
 
   setInterval(replaceSpecificAvatars, 4000);
+
 })();
 
 //for the community posts hidden or show
