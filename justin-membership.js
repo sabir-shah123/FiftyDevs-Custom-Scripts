@@ -173,6 +173,7 @@ console.log("Hello Sabirr")
       a.href = link.url;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
+      a.dataset.menuItem = "true";
 
       a.className =
         "group mt-2 flex h-7 cursor-pointer items-center justify-between rounded p-[10px] hover:bg-communities-sidebar-fill";
@@ -232,6 +233,7 @@ console.log("Hello Sabirr")
 
       btn.href = link.url;
       btn.target = "_blank";
+      btn.dataset.menuItem = "true";
 
       btn.className =
         "flex items-center justify-center w-8 h-8 rounded-md";
@@ -561,8 +563,11 @@ function addAdminButton(postEl, isApproved) {
 // == PROCESS A POST ==
 function processPost(postEl) {
   
- if (postEl.closest(".custom-gHL-resources-group") ||
-    postEl.closest(".custom-mobile-icons")) return;
+   if (postEl.dataset.menuItem === "true") return;
+  if (postEl.closest('[data-menu-item="true"]')) return;
+
+  if (postEl.closest(".custom-gHL-resources-group") ||
+      postEl.closest(".custom-mobile-icons")) return;
   
   if (postEl.dataset.processedByScript) return;
   postEl.dataset.processedByScript = "true";
