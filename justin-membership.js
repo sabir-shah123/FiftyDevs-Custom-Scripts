@@ -406,6 +406,7 @@ console.log("Hello Sabirr")
 // == CONFIGURATION ==
 const ADMIN_EMAIL = "usmanali@xortlogix.com";
 const API_BASE = "https://justin-membership.sabirshahbzu.workers.dev";
+const MATCH_STRING = 'a[href*="/communities/"][href*="/posts/"]';
 
 // == STATE ==
 let isAdmin = false;
@@ -475,7 +476,7 @@ async function fetchApprovedPosts() {
 
 // == EXTRACT POST DATA ==
 function extractPostData(postEl) {
-  const link = postEl.closest('a[href*="/posts/"]');
+  const link = postEl.closest(MATCH_STRING);
   if (!link) return null;
   const href = link.getAttribute("href");
   const id = href.split("/posts/")[1];
@@ -618,14 +619,14 @@ function startObserver() {
         // Direct match
         if (
           node.matches &&
-          node.matches('a[href*="/posts/"]')
+          node.matches(MATCH_STRING)
         ) {
           processPost(node);
         }
 
         // Children match
         const posts = node.querySelectorAll
-          ? node.querySelectorAll('a[href*="/posts/"]')
+          ? node.querySelectorAll(MATCH_STRING)
           : [];
 
         posts.forEach((post) => {
@@ -700,7 +701,7 @@ async function init() {
   isAdmin = await checkAdmin();
   console.log("Admin status:", isAdmin);
   await fetchApprovedPosts();
-  document.querySelectorAll('a[href*="/posts/"]').forEach(processPost);
+  document.querySelectorAll(MATCH_STRING).forEach(processPost);
   startObserver();
 }
 
