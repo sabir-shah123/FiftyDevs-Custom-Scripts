@@ -661,50 +661,6 @@ function startObserver() {
   console.log('Observer started');
 }
 
-// == CHECK ADMIN (using getUserData) ==
-async function getUserData() {
-  return new Promise((resolve) => {
-    try {
-      const avatarBtn = document.querySelector(
-        "#pg-afcp-navbar__navigation-page-img-avatar-profile-btn, #pg-afcp-navbar__navigation-page-txt-avatar-profile-btn"
-      );
-
-      if (!avatarBtn) {
-        resolve({ name: "", email: "" });
-        return;
-      }
-
-      avatarBtn.click();
-
-      const observer = new MutationObserver(() => {
-        const nameEl = document.querySelector(".hl-text-lg-medium");
-        const emailEl = document.querySelector(".hl-text-sm-regular");
-
-        if (nameEl && emailEl) {
-          let name = nameEl.innerText
-            .replace("Hi,", "")
-            .replace("!", "")
-            .trim();
-
-          let email = emailEl.innerText.trim();
-
-          avatarBtn.click();
-          observer.disconnect();
-
-          resolve({ name, email });
-        }
-      });
-
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-      });
-
-    } catch (err) {
-      resolve({ name: "", email: "" });
-    }
-  });
-}
 
 async function checkAdmin() {
   const { email } = await getUserData();
