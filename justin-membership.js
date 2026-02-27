@@ -181,15 +181,15 @@
   =========================
   */
 
-  function init() {
-    const sticky = document.querySelector(".sticky.top-24.overflow-hidden");
-    if (!sticky) return;
+function init() {
+  const menu = document.querySelector(
+    ".channel-list .content"
+  );
 
-    const menu = sticky.querySelector("div:nth-child(2)");
-    if (!menu) return;
+  if (!menu) return;
 
-    injectGroup(menu);
-  }
+  injectGroup(menu);
+}
 
   setTimeout(init, 1000);
 })();
