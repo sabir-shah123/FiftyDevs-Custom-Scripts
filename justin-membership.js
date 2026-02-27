@@ -160,39 +160,44 @@
   =========================
   */
 
-  const observer = new MutationObserver(() => {
-    if (menuInjected || injectingNow) return;
+ const observer = new MutationObserver(() => {
+  if (menuInjected || injectingNow) return;
 
-    const sticky = document.querySelector(".sticky.top-24.overflow-hidden");
-    if (!sticky) return;
+  const firstItem = document.querySelector(
+    '.grid.grid-cols-6.items-center'
+  );
 
-    const menuContainer = sticky.querySelector("div:nth-child(2)");
-    if (!menuContainer) return;
+  if (!firstItem) return;
 
-    console.log("[Observer] Sidebar detected");
-    injectGroup(menuContainer);
-  });
+  const sticky = firstItem.closest('.sticky');
+  if (!sticky) return;
 
-  observer.observe(document.body, { childList: true, subtree: true });
+  const menuContainer = sticky.querySelector("div:nth-child(2)");
+  if (!menuContainer) return;
 
-  /*
-  =========================
-  INITIAL CHECK
-  =========================
-  */
+  console.log("[Observer] Sidebar detected (robust)");
+  injectGroup(menuContainer);
+});
 
-  function init() {
-    const sticky = document.querySelector(".sticky.top-24.overflow-hidden");
-    if (!sticky) return;
+observer.observe(document.body, { childList: true, subtree: true });
 
-    const menu = sticky.querySelector("div:nth-child(2)");
-    if (!menu) return;
+function initM() {
+  const firstItem = document.querySelector(
+    '.grid.grid-cols-6.items-center'
+  );
 
-    injectGroup(menu);
-  }
+  if (!firstItem) return;
 
-  setTimeout(init, 1000);
-})();
+  const sticky = firstItem.closest('.sticky');
+  if (!sticky) return;
+
+  const menu = sticky.querySelector("div:nth-child(2)");
+  if (!menu) return;
+
+  injectGroup(menu);
+}
+
+setTimeout(initM, 1000);
 
 /*
   =========================
