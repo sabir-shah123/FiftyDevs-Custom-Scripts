@@ -170,13 +170,19 @@ console.log("Hello Sabirr")
 
       const a = document.createElement("a");
 
-      a.href = link.url;
+      if(link.title == 'Setup Guide'){
+        a.href = '#'
+      }else{
+         a.href = link.url;
+      }
+      
       a.target = "_blank";
       a.rel = "noopener noreferrer";
       a.dataset.menuItem = "true";
+      a.data_link = link.url
 
       a.className =
-        "group mt-2 flex h-7 cursor-pointer items-center justify-between rounded p-[10px] hover:bg-communities-sidebar-fill";
+        "group mt-2 flex h-7 cursor-pointer items-center justify-between rounded p-[10px] hover:bg-communities-sidebar-fill setup_guide_button";
 
       a.innerHTML = `
         <div class="grid w-full grid-cols-6 items-center font-medium xl:grid-cols-8">
@@ -230,7 +236,11 @@ console.log("Hello Sabirr")
     menuLinks.forEach((link, index) => {
 
       const btn = document.createElement("a");
-
+      if(link.title == 'Setup Guide'){
+        btn.href = '#'
+      }else{
+         btn.href = link.url;
+      }
       btn.href = link.url;
       btn.target = "_blank";
       btn.dataset.menuItem = "true";
