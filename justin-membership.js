@@ -192,6 +192,17 @@ function init() {
 }
 
   setTimeout(init, 1000);
+
+  const observer = new MutationObserver(() => {
+  const menu = document.querySelector(".channel-list .content");
+  if (menu && !document.querySelector("#custom-menu-group")) {
+    injectGroup(menu);
+  }
+});
+
+observer.observe(document.body, { childList: true, subtree: true });
+
+  
 })();
 
 /*
