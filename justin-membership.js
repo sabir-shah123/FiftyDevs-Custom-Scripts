@@ -1,6 +1,21 @@
 (function () {
+
+  /*
+  ========================================
+  STATE
+  ========================================
+  */
+
   let menuInjected = false;
   let injectingNow = false;
+  let currentMode = null;
+
+
+  /*
+  ========================================
+  GET USER DATA
+  ========================================
+  */
 
   async function getUserData() {
     return new Promise((resolve) => {
@@ -14,13 +29,14 @@
           return;
         }
 
-        avatarBtn.click(); // open profile
+        avatarBtn.click();
 
         const observer = new MutationObserver(() => {
           const nameEl = document.querySelector(".hl-text-lg-medium");
           const emailEl = document.querySelector(".hl-text-sm-regular");
 
           if (nameEl && emailEl) {
+
             let name = nameEl.innerText
               .replace("Hi,", "")
               .replace("!", "")
@@ -28,8 +44,7 @@
 
             let email = emailEl.innerText.trim();
 
-            avatarBtn.click(); // close profile
-
+            avatarBtn.click();
             observer.disconnect();
 
             resolve({ name, email });
@@ -40,19 +55,22 @@
           childList: true,
           subtree: true,
         });
+
       } catch (err) {
         resolve({ name: "", email: "" });
       }
     });
   }
 
+
   /*
-  =========================
+  ========================================
   BUILD LINKS
-  =========================
+  ========================================
   */
 
   async function buildMenuLinks() {
+
     const user = await getUserData();
 
     const params = new URLSearchParams({
@@ -86,13 +104,14 @@
     ];
   }
 
+
   /*
-  =========================
+  ========================================
   ICONS
-  =========================
+  ========================================
   */
 
-  const icons = [
+    const icons = [
     "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
     "M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z",
     "M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z",
@@ -100,22 +119,40 @@
     "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
   ];
 
+
   /*
-  =========================
-  INJECT MENU
-  =========================
+  ========================================
+  LAYOUT DETECTION
+  ========================================
+  */
+
+  function getLayoutMode() {
+    if (document.querySelector(".w-\\[24vw\\]")) return "desktop";
+    if (document.querySelector("#id-mobile-switch")) return "mobile";
+    return null;
+  }
+
+  function findDesktopContainer() {
+    const sidebar = document.querySelector(".w-\\[24vw\\]");
+    if (!sidebar) return null;
+
+    const sticky = sidebar.querySelector(".sticky");
+    if (!sticky) return null;
+
+    return sticky.querySelector("div:nth-child(2)");
+  }
+
+
+  /*
+  ========================================
+  DESKTOP MENU
+  ========================================
   */
 
   async function injectGroup(container) {
+
     if (!container) return;
-
-    if (menuInjected) {
-      return;
-    }
-
-    if (injectingNow) {
-      return;
-    }
+    if (menuInjected || injectingNow) return;
 
     if (container.querySelector(".custom-gHL-resources-group")) {
       menuInjected = true;
@@ -130,19 +167,34 @@
     groupDiv.className = "custom-gHL-resources-group";
 
     menuLinks.forEach((link, index) => {
+
       const a = document.createElement("a");
+
       a.href = link.url;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
-      a.className = "custom-menu-item";
+
+      a.className =
+        "group mt-2 flex h-7 cursor-pointer items-center justify-between rounded p-[10px] hover:bg-communities-sidebar-fill";
 
       a.innerHTML = `
-        <div class="col-span-1">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="${icons[index]}"></path>
-          </svg>
+        <div class="grid w-full grid-cols-6 items-center font-medium xl:grid-cols-8">
+          <div class="col-span-1 mr-3">
+            <svg xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="h-5 w-5">
+              <path stroke-linecap="round"
+                stroke-linejoin="round"
+                d="${icons[index]}"></path>
+            </svg>
+          </div>
+          <div class="col-span-4 truncate xl:col-span-6 hl-text-md-medium">
+            ${link.title}
+          </div>
         </div>
-        <div class="col-span-4 hl-text-md-medium">${link.title}</div>
       `;
 
       groupDiv.appendChild(a);
@@ -154,50 +206,135 @@
     injectingNow = false;
   }
 
+
   /*
-  =========================
-  OBSERVER
-  =========================
+  ========================================
+  MOBILE ICONS
+  ========================================
   */
 
- const observer = new MutationObserver(() => {
-  if (menuInjected || injectingNow) return;
+  async function injectMobileIcons() {
 
-  const firstItem = document.querySelector(
-    '.grid.grid-cols-6.items-center'
-  );
+    const topBar = document.querySelector(".fixed.z-50");
+    if (!topBar) return;
 
-  if (!firstItem) return;
+    if (topBar.querySelector(".custom-mobile-icons")) return;
 
-  const sticky = firstItem.closest('.sticky');
-  if (!sticky) return;
+    const menuLinks = await buildMenuLinks();
 
-  const menuContainer = sticky.querySelector("div:nth-child(2)");
-  if (!menuContainer) return;
+    const wrapper = document.createElement("div");
+    wrapper.className =
+      "custom-mobile-icons flex items-center gap-3 ml-2";
 
-  console.log("[Observer] Sidebar detected (robust)");
-  injectGroup(menuContainer);
-});
+    menuLinks.forEach((link, index) => {
 
-observer.observe(document.body, { childList: true, subtree: true });
+      const btn = document.createElement("a");
 
-function initM() {
-  const firstItem = document.querySelector(
-    '.grid.grid-cols-6.items-center'
-  );
+      btn.href = link.url;
+      btn.target = "_blank";
 
-  if (!firstItem) return;
+      btn.className =
+        "flex items-center justify-center w-8 h-8 rounded-md";
 
-  const sticky = firstItem.closest('.sticky');
-  if (!sticky) return;
+      btn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          class="w-5 h-5">
+          <path stroke-linecap="round"
+            stroke-linejoin="round"
+            d="${icons[index]}"></path>
+        </svg>
+      `;
 
-  const menu = sticky.querySelector("div:nth-child(2)");
-  if (!menu) return;
+      wrapper.appendChild(btn);
+    });
 
-  injectGroup(menu);
-}
+    const leftSection = topBar.querySelector(".flex.items-center");
 
-setTimeout(initM, 1000);
+    if (leftSection) leftSection.appendChild(wrapper);
+    else topBar.appendChild(wrapper);
+  }
+
+
+  /*
+  ========================================
+  REMOVE
+  ========================================
+  */
+
+  function removeMenu() {
+    document
+      .querySelectorAll(".custom-gHL-resources-group")
+      .forEach(el => el.remove());
+
+    menuInjected = false;
+  }
+
+  function removeMobileIcons() {
+    document
+      .querySelectorAll(".custom-mobile-icons")
+      .forEach(el => el.remove());
+  }
+
+
+  /*
+  ========================================
+  CONTROLLER
+  ========================================
+  */
+
+  async function handleLayoutChange() {
+
+    const mode = getLayoutMode();
+    if (!mode) return;
+
+    if (mode === currentMode) return;
+
+    currentMode = mode;
+
+    removeMenu();
+    removeMobileIcons();
+
+    if (mode === "desktop") {
+      const container = findDesktopContainer();
+      if (container) injectGroup(container);
+    }
+
+    if (mode === "mobile") {
+      injectMobileIcons();
+    }
+  }
+
+
+  /*
+  ========================================
+  OBSERVER
+  ========================================
+  */
+
+  const observer = new MutationObserver(() => {
+    handleLayoutChange();
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+
+
+  /*
+  ========================================
+  INITIAL RUN
+  ========================================
+  */
+
+  setTimeout(handleLayoutChange, 1200);
+
+})();
+
 
 /*
   =========================
