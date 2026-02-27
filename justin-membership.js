@@ -592,12 +592,6 @@ function addAdminButton(postEl, isApproved) {
 // == PROCESS A POST ==
 function processPost(postEl) {
   
-   if (postEl.dataset.menuItem === "true") return;
-  if (postEl.closest('[data-menu-item="true"]')) return;
-
-  if (postEl.closest(".custom-gHL-resources-group") ||
-      postEl.closest(".custom-mobile-icons")) return;
-  
   if (postEl.dataset.processedByScript) return;
   postEl.dataset.processedByScript = "true";
 
