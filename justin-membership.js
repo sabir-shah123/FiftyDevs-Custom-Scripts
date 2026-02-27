@@ -708,6 +708,7 @@ async function getUserData() {
 
 async function checkAdmin() {
   const { email } = await getUserData();
+  console.log("found email: " + email);
   return email === ADMIN_EMAIL;
 }
 
