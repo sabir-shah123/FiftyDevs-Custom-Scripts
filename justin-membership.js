@@ -559,6 +559,7 @@ function addAdminButton(postEl, isApproved) {
 
 // == PROCESS A POST ==
 function processPost(postEl) {
+  if (postEl.closest(".custom-gHL-resources-group")) return;
   if (postEl.dataset.processedByScript) return;
   postEl.dataset.processedByScript = "true";
 
