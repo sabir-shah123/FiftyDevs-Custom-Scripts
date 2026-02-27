@@ -730,12 +730,71 @@ function startObserver() {
 }
 
 
-async function checkAdmin() {
-  const { email } = await getUserData();
+async function checkAdmin(timeout = 8000) {
 
-  console.log("found email:", email);
+  return new Promise((resolve) => {
 
-  return email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    const start = Date.now();
+
+    const avatarBtn = document.querySelector(
+      "#pg-afcp-navbar__navigation-page-img-avatar-profile-btn, #pg-afcp-navbar__navigation-page-txt-avatar-profile-btn"
+    );
+
+    if (!avatarBtn) {
+      console.warn("Avatar button not found");
+      resolve(false);
+      return;
+    }
+
+    function tryRead() {
+
+      const emailEl = document.querySelector(".hl-text-sm-regular");
+
+      if (emailEl) {
+
+        const email = emailEl.innerText.trim();
+
+        console.log("Found email:", email);
+
+        // close profile panel
+        document.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Escape" })
+        );
+
+        resolve(
+          email.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+        );
+
+        return true;
+      }
+
+      return false;
+    }
+
+    function loop() {
+
+      // try reading first
+      if (tryRead()) return;
+
+      // timeout safety
+      if (Date.now() - start > timeout) {
+        console.warn("Admin check timeout");
+        resolve(false);
+        return;
+      }
+
+      // retry open
+      avatarBtn.click();
+
+      setTimeout(loop, 300);
+    }
+
+    // initial open
+    avatarBtn.click();
+
+    setTimeout(loop, 300);
+
+  });
 }
 
 // == INIT WITH LOADER ==
