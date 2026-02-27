@@ -435,9 +435,8 @@
 
 //for the community posts hidden or show
 // == CONFIGURATION ==
-const ADMIN_EMAIL = "usmanali@xortlogix.com";
-const API_BASE = "https://justin-membership.sabirshahbzu.workers.dev";
-const MATCH_STRING = 'a[href*="/posts/"]';
+const ADMIN_EMAIL = 'usmanali@xortlogix.com';
+const API_BASE = 'https://script.google.com/macros/s/AKfycbzZSwrtTgIyiBCtuIHwkE1YtTO7TVNv5ik-sxdii1-ubqMBhRpM1MsD0IWP2Dw-ENcM/exec';
 
 // == STATE ==
 let isAdmin = false;
@@ -445,37 +444,83 @@ let approvedPosts = [];
 let approvedIds = new Set();
 let processedPosts = new Set();
 
-// == HELPER: API CALLS (CORS-safe with Worker) ==
-async function callApi(action, method = "GET", data = null) {
+// == LOADER FUNCTIONS ==
+function showLoader() {
+  // Remove existing loader if any
+  const existing = document.getElementById('custom-community-loader');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'custom-community-loader';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: white;
+    font-family: sans-serif;
+  `;
+
+  const spinner = document.createElement('div');
+  spinner.style.cssText = `
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: custom-spin 1s linear infinite;
+    margin-bottom: 20px;
+  `;
+
+  const text = document.createElement('div');
+  text.innerText = 'Loading community posts...';
+  text.style.fontSize = '18px';
+
+  // Add keyframe animation
+  const style = document.createElement('style');
+  style.innerHTML = `
+    @keyframes custom-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `;
+  document.head.appendChild(style);
+
+  overlay.appendChild(spinner);
+  overlay.appendChild(text);
+  document.body.appendChild(overlay);
+}
+
+function hideLoader() {
+  const loader = document.getElementById('custom-community-loader');
+  if (loader) loader.remove();
+}
+
+// == HELPER: API CALLS (CORS-safe) ==
+async function callApi(action, method = 'GET', data = null) {
   const url = new URL(API_BASE);
-
-  if (method === "GET") {
-    url.searchParams.append("action", action);
-
-    const response = await fetch(url, {
-      method: "GET",
-      mode: "cors",
-    });
-
+  if (method === 'GET') {
+    url.searchParams.append('action', action);
+    const response = await fetch(url, { method: 'GET', mode: 'cors' });
     if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-
     return response.json();
   } else {
-    // ✅ Send clean JSON body
+    // Use text/plain to avoid preflight
     const response = await fetch(url, {
-      method: "POST",
-      mode: "cors",
-      headers: {
-        "Content-Type": "text/plain", // avoids CORS preflight
-      },
-      body: JSON.stringify({
-        action,
-        ...data,
-      }),
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action, ...data })
     });
-
     if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-
     return response.json();
   }
 }
@@ -483,23 +528,20 @@ async function callApi(action, method = "GET", data = null) {
 // == FETCH APPROVED POSTS ==
 async function fetchApprovedPosts() {
   try {
-    const posts = await callApi("getAll", "GET");
+    const posts = await callApi('getAll', 'GET');
     approvedPosts = posts;
-    approvedIds = new Set(posts.map((p) => p.ID));
-    localStorage.setItem(
-      "approvedPosts",
-      JSON.stringify({ timestamp: Date.now(), data: posts })
-    );
-    console.log("Approved posts loaded:", approvedIds);
+    approvedIds = new Set(posts.map(p => p.ID));
+    localStorage.setItem('approvedPosts', JSON.stringify({ timestamp: Date.now(), data: posts }));
+    console.log('Approved posts loaded:', approvedIds);
   } catch (e) {
-    console.error("Failed to fetch approved posts:", e);
-    const cached = localStorage.getItem("approvedPosts");
+    console.error('Failed to fetch approved posts:', e);
+    const cached = localStorage.getItem('approvedPosts');
     if (cached) {
       const { timestamp, data } = JSON.parse(cached);
       if (Date.now() - timestamp < 5 * 60 * 1000) {
         approvedPosts = data;
-        approvedIds = new Set(data.map((p) => p.ID));
-        console.log("Using cached approved posts");
+        approvedIds = new Set(data.map(p => p.ID));
+        console.log('Using cached approved posts');
       }
     }
   }
@@ -507,48 +549,45 @@ async function fetchApprovedPosts() {
 
 // == EXTRACT POST DATA ==
 function extractPostData(postEl) {
-  const link = postEl.closest(MATCH_STRING);
+  const link = postEl.closest('a[href*="/posts/"]');
   if (!link) return null;
-  const href = link.getAttribute("href");
-  const id = href.split("/posts/")[1];
+  const href = link.getAttribute('href');
+  const id = href.split('/posts/')[1];
 
-  const titleEl = postEl.querySelector(".hl-text-lg-medium");
-  const title = titleEl ? titleEl.innerText.trim() : "";
+  const titleEl = postEl.querySelector('.hl-text-lg-medium');
+  const title = titleEl ? titleEl.innerText.trim() : '';
 
-  const contentEl = postEl.querySelector(".content-description");
-  const content = contentEl ? contentEl.innerText.trim() : "";
+  const contentEl = postEl.querySelector('.content-description');
+  const content = contentEl ? contentEl.innerText.trim() : '';
 
   const authorEl = postEl.querySelector('.user-profile a[href*="/users/"] div');
-  const author = authorEl ? authorEl.innerText.trim() : "";
+  const author = authorEl ? authorEl.innerText.trim() : '';
 
   const channelEl = postEl.querySelector('a[href*="/channels/"] div');
-  const channel = channelEl ? channelEl.innerText.trim() : "";
+  const channel = channelEl ? channelEl.innerText.trim() : '';
 
-  const timeEl = postEl.querySelector(
-    ".text-communities-font-secondary.hl-text-sm-normal"
-  );
-  const timestamp = timeEl ? timeEl.innerText.trim() : "";
+  const timeEl = postEl.querySelector('.text-communities-font-secondary.hl-text-sm-normal');
+  const timestamp = timeEl ? timeEl.innerText.trim() : '';
 
   const imgEl = postEl.querySelector('img[alt="Thumbnail"]');
-  const image = imgEl ? imgEl.src : "";
+  const image = imgEl ? imgEl.src : '';
 
   return { id, title, content, author, channel, timestamp, image };
 }
 
 // == ADD ADMIN BUTTON ==
 function addAdminButton(postEl, isApproved) {
-  const actionsContainer = postEl.querySelector(".response-content");
+  const actionsContainer = postEl.querySelector('.response-content');
   if (!actionsContainer) return;
-  if (postEl.querySelector(".admin-approve-btn")) return;
+  if (postEl.querySelector('.admin-approve-btn')) return;
 
-  const btn = document.createElement("button");
-  btn.className =
-    "admin-approve-btn ml-2 px-3 py-1 rounded text-sm font-medium border transition-colors";
-  btn.style.backgroundColor = isApproved ? "#ef4444" : "#10b981";
-  btn.style.color = "white";
-  btn.style.border = "none";
-  btn.style.cursor = "pointer";
-  btn.innerText = isApproved ? "Disapprove" : "Approve";
+  const btn = document.createElement('button');
+  btn.className = 'admin-approve-btn ml-2 px-3 py-1 rounded text-sm font-medium border transition-colors';
+  btn.style.backgroundColor = isApproved ? '#ef4444' : '#10b981';
+  btn.style.color = 'white';
+  btn.style.border = 'none';
+  btn.style.cursor = 'pointer';
+  btn.innerText = isApproved ? 'Disapprove' : 'Approve';
 
   btn.onclick = async (e) => {
     e.stopPropagation();
@@ -559,29 +598,26 @@ function addAdminButton(postEl, isApproved) {
 
     const newStatus = !isApproved;
     const confirmMsg = newStatus
-      ? "Approve this post? It will be visible to all users."
-      : "Disapprove this post? It will be hidden from non-admin users.";
+      ? 'Approve this post? It will be visible to all users.'
+      : 'Disapprove this post? It will be hidden from non-admin users.';
 
     if (!confirm(confirmMsg)) return;
 
     try {
       if (newStatus) {
-        await callApi("add", "POST", { post: postData });
+        await callApi('add', 'POST', { post: postData });
         approvedIds.add(postData.id);
         approvedPosts.push(postData);
       } else {
-        await callApi("delete", "POST", { postId: postData.id });
+        await callApi('delete', 'POST', { postId: postData.id });
         approvedIds.delete(postData.id);
-        approvedPosts = approvedPosts.filter((p) => p.ID !== postData.id);
+        approvedPosts = approvedPosts.filter(p => p.ID !== postData.id);
       }
-      btn.innerText = newStatus ? "Disapprove" : "Approve";
-      btn.style.backgroundColor = newStatus ? "#ef4444" : "#10b981";
-      localStorage.setItem(
-        "approvedPosts",
-        JSON.stringify({ timestamp: Date.now(), data: approvedPosts })
-      );
+      btn.innerText = newStatus ? 'Disapprove' : 'Approve';
+      btn.style.backgroundColor = newStatus ? '#ef4444' : '#10b981';
+      localStorage.setItem('approvedPosts', JSON.stringify({ timestamp: Date.now(), data: approvedPosts }));
     } catch (err) {
-      alert("Failed to update. Check console.");
+      alert('Failed to update. Check console.');
       console.error(err);
     }
   };
@@ -591,9 +627,8 @@ function addAdminButton(postEl, isApproved) {
 
 // == PROCESS A POST ==
 function processPost(postEl) {
-  
   if (postEl.dataset.processedByScript) return;
-  postEl.dataset.processedByScript = "true";
+  postEl.dataset.processedByScript = 'true';
 
   const postData = extractPostData(postEl);
   if (!postData) return;
@@ -603,109 +638,104 @@ function processPost(postEl) {
   if (isAdmin) {
     addAdminButton(postEl, isApproved);
   } else {
-    postEl.style.display = isApproved ? "" : "none";
+    postEl.style.display = isApproved ? '' : 'none';
   }
 }
 
 // == OBSERVER ==
 function startObserver() {
   const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mut) => {
-      mut.addedNodes.forEach((node) => {
+    mutations.forEach(mut => {
+      mut.addedNodes.forEach(node => {
         if (node.nodeType === 1) {
           if (node.matches && node.matches('a[href*="/posts/"]')) {
             processPost(node);
           }
-          const posts = node.querySelectorAll
-            ? node.querySelectorAll('a[href*="/posts/"]')
-            : [];
+          const posts = node.querySelectorAll ? node.querySelectorAll('a[href*="/posts/"]') : [];
           posts.forEach(processPost);
         }
       });
     });
   });
   observer.observe(document.body, { childList: true, subtree: true });
-  console.log("Observer started");
+  console.log('Observer started');
 }
 
+// == CHECK ADMIN (using getUserData) ==
+async function getUserData() {
+  return new Promise((resolve) => {
+    try {
+      const avatarBtn = document.querySelector(
+        "#pg-afcp-navbar__navigation-page-img-avatar-profile-btn, #pg-afcp-navbar__navigation-page-txt-avatar-profile-btn"
+      );
 
-// == CHECK ADMIN ==
-// async function checkAdmin() {
-//   return new Promise((resolve) => {
-//     const emailEl = document.querySelector(
-//       "div.max-w-\\[280px\\].truncate.text-center.text-sm.font-normal.text-communities-font-primary.hl-text-sm-regular"
-//     );
-//     if (emailEl && emailEl.innerText.trim() === ADMIN_EMAIL) {
-//       resolve(true);
-//       return;
-//     }
+      if (!avatarBtn) {
+        resolve({ name: "", email: "" });
+        return;
+      }
 
-//     const avatarBtn = document.querySelector(
-//       "#pg-afcp-navbar__navigation-page-img-avatar-profile-btn"
-//     );
-//     if (!avatarBtn) {
-//       console.warn("Avatar button not found, assuming non-admin");
-//       resolve(false);
-//       return;
-//     }
+      avatarBtn.click();
 
-//     avatarBtn.click();
+      const observer = new MutationObserver(() => {
+        const nameEl = document.querySelector(".hl-text-lg-medium");
+        const emailEl = document.querySelector(".hl-text-sm-regular");
 
-//     const maxWait = 3000;
-//     const start = Date.now();
-//     const interval = setInterval(() => {
-//       const emailEl = document.querySelector(
-//         "div.max-w-\\[280px\\].truncate.text-center.text-sm.font-normal.text-communities-font-primary.hl-text-sm-regular"
-//       );
-//       if (emailEl) {
-//         clearInterval(interval);
-//         const email = emailEl.innerText.trim();
-//         document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-//         resolve(email === ADMIN_EMAIL);
-//       } else if (Date.now() - start > maxWait) {
-//         clearInterval(interval);
-//         document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-//         resolve(false);
-//       }
-//     }, 200);
-//   });
-// }
+        if (nameEl && emailEl) {
+          let name = nameEl.innerText
+            .replace("Hi,", "")
+            .replace("!", "")
+            .trim();
 
-// == CHECK ADMIN (using your getUserData function) ==
+          let email = emailEl.innerText.trim();
+
+          avatarBtn.click();
+          observer.disconnect();
+
+          resolve({ name, email });
+        }
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+
+    } catch (err) {
+      resolve({ name: "", email: "" });
+    }
+  });
+}
+
 async function checkAdmin() {
+  const { email } = await getUserData();
+  return email === ADMIN_EMAIL;
+}
+
+// == INIT WITH LOADER ==
+async function init() {
+  showLoader();
+
+  // Safety timeout: hide loader after 10 seconds in case something hangs
+  const safetyTimer = setTimeout(() => {
+    hideLoader();
+    console.warn('Loader hidden after timeout');
+  }, 10000);
+
   try {
-    const { email } = await getUserData();
-    console.log('Current user email:', email);
-    return email === ADMIN_EMAIL;
+    console.log('Initializing...');
+    isAdmin = await checkAdmin();
+    console.log('Admin status:', isAdmin);
+    await fetchApprovedPosts();
+    document.querySelectorAll('a[href*="/posts/"]').forEach(processPost);
+    startObserver();
+    console.log('Initialization complete');
   } catch (err) {
-    console.error('Failed to get user email:', err);
-    return false;
+    console.error('Initialization error:', err);
+  } finally {
+    clearTimeout(safetyTimer);
+    hideLoader();
   }
 }
 
-// Replace the old checkAdmin function in your script with this one
-
-// == INIT ==
-// async function init() {
-//   console.log("Initializing...");
-//   isAdmin = await checkAdmin();
-//   console.log("Admin status:", isAdmin);
-//   await fetchApprovedPosts();
-//   document.querySelectorAll(MATCH_STRING).forEach(processPost);
-//   startObserver();
-// }
-
-async function init() {
-  console.log('Initializing...');
-  
-  // Get user email and check if admin
-  const { email } = await getUserData();
-  isAdmin = email === ADMIN_EMAIL;
-  console.log('Admin status:', isAdmin, 'Email:', email);
-  
-  await fetchApprovedPosts();
-  document.querySelectorAll('a[href*="/posts/"]').forEach(processPost);
-  startObserver();
-}
-
+// Run the script
 init();
