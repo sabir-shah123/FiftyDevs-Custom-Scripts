@@ -16,50 +16,118 @@
   ========================================
   */
 
-  async function getUserData() {
-    return new Promise((resolve) => {
-      try {
-        const avatarBtn = document.querySelector(
-          "#pg-afcp-navbar__navigation-page-img-avatar-profile-btn, #pg-afcp-navbar__navigation-page-txt-avatar-profile-btn"
+  // async function getUserData() {
+  //   return new Promise((resolve) => {
+  //     try {
+  //       const avatarBtn = document.querySelector(
+  //         "#pg-afcp-navbar__navigation-page-img-avatar-profile-btn, #pg-afcp-navbar__navigation-page-txt-avatar-profile-btn"
+  //       );
+
+  //       if (!avatarBtn) {
+  //         resolve({ name: "", email: "" });
+  //         return;
+  //       }
+
+  //       avatarBtn.click();
+
+  //       const observer = new MutationObserver(() => {
+  //         const nameEl = document.querySelector(".hl-text-lg-medium");
+  //         const emailEl = document.querySelector(".hl-text-sm-regular");
+
+  //         if (nameEl && emailEl) {
+
+  //           let name = nameEl.innerText
+  //             .replace("Hi,", "")
+  //             .replace("!", "")
+  //             .trim();
+
+  //           let email = emailEl.innerText.trim();
+
+  //           avatarBtn.click();
+  //           observer.disconnect();
+
+  //           resolve({ name, email });
+  //         }
+  //       });
+
+  //       observer.observe(document.body, {
+  //         childList: true,
+  //         subtree: true,
+  //       });
+
+  //     } catch (err) {
+  //       resolve({ name: "", email: "" });
+  //     }
+  //   });
+  // }
+
+
+  async function getUserData(timeout = 8000) {
+
+  return new Promise((resolve) => {
+
+    const start = Date.now();
+
+    const avatarBtn = document.querySelector(
+      "#pg-afcp-navbar__navigation-page-img-avatar-profile-btn, #pg-afcp-navbar__navigation-page-txt-avatar-profile-btn"
+    );
+
+    if (!avatarBtn) {
+      resolve({ name: "", email: "" });
+      return;
+    }
+
+    function tryRead() {
+
+      const nameEl = document.querySelector(".hl-text-lg-medium");
+      const emailEl = document.querySelector(".hl-text-sm-regular");
+
+      if (nameEl && emailEl) {
+
+        let name = nameEl.innerText
+          .replace("Hi,", "")
+          .replace("!", "")
+          .trim();
+
+        let email = emailEl.innerText.trim();
+
+        // close panel
+        document.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Escape" })
         );
 
-        if (!avatarBtn) {
-          resolve({ name: "", email: "" });
-          return;
-        }
-
-        avatarBtn.click();
-
-        const observer = new MutationObserver(() => {
-          const nameEl = document.querySelector(".hl-text-lg-medium");
-          const emailEl = document.querySelector(".hl-text-sm-regular");
-
-          if (nameEl && emailEl) {
-
-            let name = nameEl.innerText
-              .replace("Hi,", "")
-              .replace("!", "")
-              .trim();
-
-            let email = emailEl.innerText.trim();
-
-            avatarBtn.click();
-            observer.disconnect();
-
-            resolve({ name, email });
-          }
-        });
-
-        observer.observe(document.body, {
-          childList: true,
-          subtree: true,
-        });
-
-      } catch (err) {
-        resolve({ name: "", email: "" });
+        resolve({ name, email });
+        return true;
       }
-    });
-  }
+
+      return false;
+    }
+
+    function loop() {
+
+      // try reading first
+      if (tryRead()) return;
+
+      // timeout safety
+      if (Date.now() - start > timeout) {
+        console.warn("User data timeout");
+        resolve({ name: "", email: "" });
+        return;
+      }
+
+      // click avatar again (sometimes needed)
+      avatarBtn.click();
+
+      setTimeout(loop, 300);
+    }
+
+    // initial open
+    avatarBtn.click();
+
+    setTimeout(loop, 300);
+
+  });
+}
 
 
   /*
@@ -664,8 +732,10 @@ function startObserver() {
 
 async function checkAdmin() {
   const { email } = await getUserData();
-  console.log("found email: " + email);
-  return email === ADMIN_EMAIL;
+
+  console.log("found email:", email);
+
+  return email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 }
 
 // == INIT WITH LOADER ==
