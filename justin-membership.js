@@ -729,22 +729,52 @@ function startObserver() {
   console.log('Observer started');
 }
 
+function waitForElement(selector, timeout = 10000) {
+  return new Promise((resolve) => {
+
+    const el = document.querySelector(selector);
+    if (el) {
+      resolve(el);
+      return;
+    }
+
+    const observer = new MutationObserver(() => {
+      const el = document.querySelector(selector);
+      if (el) {
+        observer.disconnect();
+        resolve(el);
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    setTimeout(() => {
+      observer.disconnect();
+      resolve(null);
+    }, timeout);
+
+  });
+}
 
 async function checkAdmin(timeout = 8000) {
+
+  const avatarSelector =
+    "#pg-afcp-navbar__navigation-page-img-avatar-profile-btn, " +
+    "#pg-afcp-navbar__navigation-page-txt-avatar-profile-btn";
+
+  const avatarBtn = await waitForElement(avatarSelector, 10000);
+
+  if (!avatarBtn) {
+    console.warn("Avatar button not found after waiting");
+    return false;
+  }
 
   return new Promise((resolve) => {
 
     const start = Date.now();
-
-    const avatarBtn = document.querySelector(
-      "#pg-afcp-navbar__navigation-page-img-avatar-profile-btn, #pg-afcp-navbar__navigation-page-txt-avatar-profile-btn"
-    );
-
-    if (!avatarBtn) {
-      console.warn("Avatar button not found");
-      resolve(false);
-      return;
-    }
 
     function tryRead() {
 
@@ -756,7 +786,6 @@ async function checkAdmin(timeout = 8000) {
 
         console.log("Found email:", email);
 
-        // close profile panel
         document.dispatchEvent(
           new KeyboardEvent("keydown", { key: "Escape" })
         );
@@ -773,29 +802,24 @@ async function checkAdmin(timeout = 8000) {
 
     function loop() {
 
-      // try reading first
       if (tryRead()) return;
 
-      // timeout safety
       if (Date.now() - start > timeout) {
         console.warn("Admin check timeout");
         resolve(false);
         return;
       }
 
-      // retry open
       avatarBtn.click();
-
       setTimeout(loop, 300);
     }
 
-    // initial open
     avatarBtn.click();
-
     setTimeout(loop, 300);
 
   });
 }
+
 
 // == INIT WITH LOADER ==
 async function init() {
