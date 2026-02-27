@@ -437,7 +437,7 @@
 // == CONFIGURATION ==
 const ADMIN_EMAIL = "usmanali@xortlogix.com";
 const API_BASE = "https://justin-membership.sabirshahbzu.workers.dev";
-const MATCH_STRING = 'a[href*="/communities/"][href*="/posts/"]';
+const MATCH_STRING = 'a[href*="/posts/"]';
 
 // == STATE ==
 let isAdmin = false;
@@ -614,78 +614,26 @@ function processPost(postEl) {
 }
 
 // == OBSERVER ==
-// function startObserver() {
-//   const observer = new MutationObserver((mutations) => {
-//     mutations.forEach((mut) => {
-//       mut.addedNodes.forEach((node) => {
-//         if (node.nodeType === 1) {
-//           if (node.matches && node.matches('a[href*="/posts/"]')) {
-//             processPost(node);
-//           }
-//           const posts = node.querySelectorAll
-//             ? node.querySelectorAll('a[href*="/posts/"]')
-//             : [];
-//           posts.forEach(processPost);
-//         }
-//       });
-//     });
-//   });
-//   observer.observe(document.body, { childList: true, subtree: true });
-//   console.log("Observer started");
-// }
-
 function startObserver() {
-
   const observer = new MutationObserver((mutations) => {
-
     mutations.forEach((mut) => {
-
       mut.addedNodes.forEach((node) => {
-
-        if (node.nodeType !== 1) return;
-
-        // ✅ Ignore custom menus completely
-        if (
-          node.closest?.(".custom-gHL-resources-group") ||
-          node.closest?.(".custom-mobile-icons")
-        ) return;
-
-        // Direct match
-        if (
-          node.matches &&
-          node.matches(MATCH_STRING)
-        ) {
-          processPost(node);
+        if (node.nodeType === 1) {
+          if (node.matches && node.matches('a[href*="/posts/"]')) {
+            processPost(node);
+          }
+          const posts = node.querySelectorAll
+            ? node.querySelectorAll('a[href*="/posts/"]')
+            : [];
+          posts.forEach(processPost);
         }
-
-        // Children match
-        const posts = node.querySelectorAll
-          ? node.querySelectorAll(MATCH_STRING)
-          : [];
-
-        posts.forEach((post) => {
-
-          if (
-            post.closest(".custom-gHL-resources-group") ||
-            post.closest(".custom-mobile-icons")
-          ) return;
-
-          processPost(post);
-        });
-
       });
-
     });
-
   });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
-
+  observer.observe(document.body, { childList: true, subtree: true });
   console.log("Observer started");
 }
+
 
 // == CHECK ADMIN ==
 async function checkAdmin() {
