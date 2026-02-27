@@ -1,5 +1,4 @@
 (function () {
-console.log("Hello Sabirr")
   /*
   ========================================
   STATE
@@ -151,67 +150,87 @@ console.log("Hello Sabirr")
 
   async function injectGroup(container) {
 
-    if (!container) return;
-    if (menuInjected || injectingNow) return;
+  if (!container) return;
+  if (menuInjected || injectingNow) return;
 
-    if (container.querySelector(".custom-gHL-resources-group")) {
-      menuInjected = true;
-      return;
-    }
+  if (container.querySelector(".custom-gHL-resources-group")) {
+    menuInjected = true;
+    return;
+  }
 
-    injectingNow = true;
+  injectingNow = true;
 
-    const menuLinks = await buildMenuLinks();
+  const menuLinks = await buildMenuLinks();
 
-    const groupDiv = document.createElement("div");
-    groupDiv.className = "custom-gHL-resources-group";
+  const groupDiv = document.createElement("div");
+  groupDiv.className = "custom-gHL-resources-group";
+  groupDiv.dataset.menuItem = "true"; // protection for approval script
 
-    menuLinks.forEach((link, index) => {
+  menuLinks.forEach((link, index) => {
 
-      const a = document.createElement("a");
+    const a = document.createElement("a");
 
-      if(link.title == 'Setup Guide'){
-        a.href = '#'
-      }else{
-         a.href = link.url;
-      }
-      
+    // ✅ Setup Guide special case
+    if (link.title === "Setup Guide") {
+      a.href = "#";
+      a.dataset.link = link.url;   // store real URL safely
+      a.classList.add("setup_guide_button");
+    } else {
+      a.href = link.url;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
-      a.dataset.menuItem = "true";
-      a.data_link = link.url
+    }
 
-      a.className =
-        "group mt-2 flex h-7 cursor-pointer items-center justify-between rounded p-[10px] hover:bg-communities-sidebar-fill setup_guide_button";
+    a.dataset.menuItem = "true";
 
-      a.innerHTML = `
-        <div class="grid w-full grid-cols-6 items-center font-medium xl:grid-cols-8">
-          <div class="col-span-1 mr-3">
-            <svg xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="2"
-              stroke="currentColor"
-              class="h-5 w-5">
-              <path stroke-linecap="round"
-                stroke-linejoin="round"
-                d="${icons[index]}"></path>
-            </svg>
-          </div>
-          <div class="col-span-4 truncate xl:col-span-6 hl-text-md-medium">
-            ${link.title}
-          </div>
+    a.className +=
+      " group mt-2 flex h-7 cursor-pointer items-center justify-between rounded p-[10px] hover:bg-communities-sidebar-fill";
+
+    a.innerHTML = `
+      <div class="grid w-full grid-cols-6 items-center font-medium xl:grid-cols-8">
+        <div class="col-span-1 mr-3">
+          <svg xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            class="h-5 w-5">
+            <path stroke-linecap="round"
+              stroke-linejoin="round"
+              d="${icons[index]}"></path>
+          </svg>
         </div>
-      `;
+        <div class="col-span-4 truncate xl:col-span-6 hl-text-md-medium">
+          ${link.title}
+        </div>
+      </div>
+    `;
 
-      groupDiv.appendChild(a);
-    });
+    groupDiv.appendChild(a);
+  });
 
-    container.appendChild(groupDiv);
+  container.appendChild(groupDiv);
 
-    menuInjected = true;
-    injectingNow = false;
-  }
+  menuInjected = true;
+  injectingNow = false;
+}
+
+  document.addEventListener("click", function (e) {
+
+  const btn = e.target.closest(".setup_guide_button");
+  if (!btn) return;
+
+  e.preventDefault();
+
+  const url = btn.dataset.link;
+  if (!url) return;
+
+  console.log("Setup Guide clicked:", url);
+
+  // do your custom logic here
+  window.open(url, "_blank");
+
+});
 
 
   /*
