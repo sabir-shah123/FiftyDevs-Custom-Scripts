@@ -436,7 +436,7 @@
 //for the community posts hidden or show
 // == CONFIGURATION ==
 const ADMIN_EMAIL = 'usmanali@xortlogix.com';
-const API_BASE = 'https://script.google.com/macros/s/AKfycbzZSwrtTgIyiBCtuIHwkE1YtTO7TVNv5ik-sxdii1-ubqMBhRpM1MsD0IWP2Dw-ENcM/exec';
+const API_BASE = 'https://justin-membership.sabirshahbzu.workers.dev';
 
 // == STATE ==
 let isAdmin = false;
