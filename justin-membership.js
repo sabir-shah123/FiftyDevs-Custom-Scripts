@@ -630,54 +630,81 @@ function startObserver() {
 
 
 // == CHECK ADMIN ==
+// async function checkAdmin() {
+//   return new Promise((resolve) => {
+//     const emailEl = document.querySelector(
+//       "div.max-w-\\[280px\\].truncate.text-center.text-sm.font-normal.text-communities-font-primary.hl-text-sm-regular"
+//     );
+//     if (emailEl && emailEl.innerText.trim() === ADMIN_EMAIL) {
+//       resolve(true);
+//       return;
+//     }
+
+//     const avatarBtn = document.querySelector(
+//       "#pg-afcp-navbar__navigation-page-img-avatar-profile-btn"
+//     );
+//     if (!avatarBtn) {
+//       console.warn("Avatar button not found, assuming non-admin");
+//       resolve(false);
+//       return;
+//     }
+
+//     avatarBtn.click();
+
+//     const maxWait = 3000;
+//     const start = Date.now();
+//     const interval = setInterval(() => {
+//       const emailEl = document.querySelector(
+//         "div.max-w-\\[280px\\].truncate.text-center.text-sm.font-normal.text-communities-font-primary.hl-text-sm-regular"
+//       );
+//       if (emailEl) {
+//         clearInterval(interval);
+//         const email = emailEl.innerText.trim();
+//         document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+//         resolve(email === ADMIN_EMAIL);
+//       } else if (Date.now() - start > maxWait) {
+//         clearInterval(interval);
+//         document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+//         resolve(false);
+//       }
+//     }, 200);
+//   });
+// }
+
+// == CHECK ADMIN (using your getUserData function) ==
 async function checkAdmin() {
-  return new Promise((resolve) => {
-    const emailEl = document.querySelector(
-      "div.max-w-\\[280px\\].truncate.text-center.text-sm.font-normal.text-communities-font-primary.hl-text-sm-regular"
-    );
-    if (emailEl && emailEl.innerText.trim() === ADMIN_EMAIL) {
-      resolve(true);
-      return;
-    }
-
-    const avatarBtn = document.querySelector(
-      "#pg-afcp-navbar__navigation-page-img-avatar-profile-btn"
-    );
-    if (!avatarBtn) {
-      console.warn("Avatar button not found, assuming non-admin");
-      resolve(false);
-      return;
-    }
-
-    avatarBtn.click();
-
-    const maxWait = 3000;
-    const start = Date.now();
-    const interval = setInterval(() => {
-      const emailEl = document.querySelector(
-        "div.max-w-\\[280px\\].truncate.text-center.text-sm.font-normal.text-communities-font-primary.hl-text-sm-regular"
-      );
-      if (emailEl) {
-        clearInterval(interval);
-        const email = emailEl.innerText.trim();
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-        resolve(email === ADMIN_EMAIL);
-      } else if (Date.now() - start > maxWait) {
-        clearInterval(interval);
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-        resolve(false);
-      }
-    }, 200);
-  });
+  try {
+    const { email } = await getUserData();
+    console.log('Current user email:', email);
+    return email === ADMIN_EMAIL;
+  } catch (err) {
+    console.error('Failed to get user email:', err);
+    return false;
+  }
 }
 
+// Replace the old checkAdmin function in your script with this one
+
 // == INIT ==
+// async function init() {
+//   console.log("Initializing...");
+//   isAdmin = await checkAdmin();
+//   console.log("Admin status:", isAdmin);
+//   await fetchApprovedPosts();
+//   document.querySelectorAll(MATCH_STRING).forEach(processPost);
+//   startObserver();
+// }
+
 async function init() {
-  console.log("Initializing...");
-  isAdmin = await checkAdmin();
-  console.log("Admin status:", isAdmin);
+  console.log('Initializing...');
+  
+  // Get user email and check if admin
+  const { email } = await getUserData();
+  isAdmin = email === ADMIN_EMAIL;
+  console.log('Admin status:', isAdmin, 'Email:', email);
+  
   await fetchApprovedPosts();
-  document.querySelectorAll(MATCH_STRING).forEach(processPost);
+  document.querySelectorAll('a[href*="/posts/"]').forEach(processPost);
   startObserver();
 }
 
