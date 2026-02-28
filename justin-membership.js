@@ -96,6 +96,10 @@
           new KeyboardEvent("keydown", { key: "Escape" })
         );
 
+         document.querySelector(
+            "#pg-afcp-navbar__navigation-page-img-avatar-profile-btn, #pg-afcp-navbar__navigation-page-txt-avatar-profile-btn"
+          ).click();
+
         resolve({ name, email });
         return true;
       }
@@ -787,6 +791,10 @@ async function checkAdmin(timeout = 8000) {
         document.dispatchEvent(
           new KeyboardEvent("keydown", { key: "Escape" })
         );
+
+        document.querySelector(
+            "#pg-afcp-navbar__navigation-page-img-avatar-profile-btn, #pg-afcp-navbar__navigation-page-txt-avatar-profile-btn"
+          ).click();
 
         resolve(
           email.toLowerCase() === ADMIN_EMAIL.toLowerCase()
