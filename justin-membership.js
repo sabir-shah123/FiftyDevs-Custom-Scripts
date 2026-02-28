@@ -315,26 +315,23 @@
 
     menuLinks.forEach((link, index) => {
 
-      const btn = document.createElement("a");
+     const btn = document.createElement("a");
 
+    let btnclasses = "flex items-center justify-center w-8 h-8 rounded-md";
+    
+    if (link.title === "Setup Guide") {
+        btn.href = "#";                    
+        btn.dataset.link = link.url;      
+        btnclasses += " setup_guide_button"; 
+    } else {
+        btn.href = link.url;
+        btn.target = "_blank";
+        btn.rel = "noopener noreferrer";
+    }
 
-          if (link.title === "Setup Guide") {
-              btn.href = "#";
-              btn.dataset.link = link.url;   // store real URL safely
-              btn.classList.add("setup_guide_button");
-          } else {
-              btn.href = link.url;
-               btn.target = "_blank";
-              btn.rel = "noopener noreferrer";
-          }
-
-      
-      btn.href = link.url;
-      btn.target = "_blank";
+      // Common attribute for all buttons
       btn.dataset.menuItem = "true";
-
-      btn.className =
-        "flex items-center justify-center w-8 h-8 rounded-md";
+      btn.className = btnclasses;
 
       btn.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg"
