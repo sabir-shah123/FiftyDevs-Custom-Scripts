@@ -321,13 +321,18 @@
     menuLinks.forEach((link, index) => {
 
       const btn = document.createElement("a");
-      if(link.title == 'Setup Guide'){
-        btn.href = '#'
-      }else{
-         btn.href = link.url;
+
+       if (link.title === "Setup Guide") {
+            btn.href = "#";
+            btn.dataset.link = link.url;   // store real URL safely
+            btn.classList.add("setup_guide_button");
+        } else {
+            btn.href = link.url;
+            btn.target = "_blank";
+            btn.rel = "noopener noreferrer";
       }
-      btn.href = link.url;
-      btn.target = "_blank";
+
+      
       btn.dataset.menuItem = "true";
 
       btn.className =
