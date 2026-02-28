@@ -283,22 +283,20 @@
   injectingNow = false;
 }
 
-  document.addEventListener("click", function (e) {
-
-  const btn = e.target.closest(".setup_guide_button");
-  if (!btn) return;
-
-  e.preventDefault();
-
-  const url = btn.dataset.link;
-  if (!url) return;
-
-  console.log("Setup Guide clicked:", url);
-
-  // do your custom logic here
-  window.open(url, "_blank");
+ 
 
 });
+
+
+ document.addEventListener("click", function (e) {
+    const btn = e.target.closest(".setup_guide_button");
+    if (!btn) return;
+    e.preventDefault();
+    const url = btn.dataset.link;
+    if (!url) return;
+    console.log("Setup Guide clicked:", url);
+    window.open(url, "_blank");
+  });
 
 
   /*
