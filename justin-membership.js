@@ -283,12 +283,7 @@
   injectingNow = false;
 }
 
- 
-
-// });
-
-
- document.addEventListener("click", function (e) {
+  document.addEventListener("click", function (e) {
     const btn = e.target.closest(".setup_guide_button");
     if (!btn) return;
     e.preventDefault();
@@ -322,17 +317,20 @@
 
       const btn = document.createElement("a");
 
-       if (link.title === "Setup Guide") {
-            btn.href = "#";
-            btn.dataset.link = link.url;   // store real URL safely
-            btn.classList.add("setup_guide_button");
-        } else {
-            btn.href = link.url;
-            btn.target = "_blank";
-            btn.rel = "noopener noreferrer";
-      }
+
+          if (link.title === "Setup Guide") {
+              btn.href = "#";
+              btn.dataset.link = link.url;   // store real URL safely
+              btn.classList.add("setup_guide_button");
+          } else {
+              btn.href = link.url;
+               btn.target = "_blank";
+              btn.rel = "noopener noreferrer";
+          }
 
       
+      btn.href = link.url;
+      btn.target = "_blank";
       btn.dataset.menuItem = "true";
 
       btn.className =
